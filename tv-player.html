@@ -5,41 +5,39 @@
   <title>TV Player</title>
   <style>
   html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
-  iframe { width: 100%; height: 100%; border: 0; display: block; }
+  #player { width: 100%; height: 100%; border: 0; }
   </style>
   </head>
   <body>
-  <iframe id="player"
-          allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-          frameborder="0"
-          allowfullscreen></iframe>
+  <div id="player"></div>
   <script>
   (function(){
       var params = new URLSearchParams(location.search);
       var videoId = params.get('v') || '';
       var startSeconds = parseInt(params.get('t') || '0', 10) || 0;
-      if (!videoId) return;
-      var iframe = document.getElementById('player');
-      iframe.src = 'https://www.youtube.com/embed/' + encodeURIComponent(videoId) +
-                   '?autoplay=1&start=' + startSeconds +
-                   '&controls=0&modestbranding=1&rel=0&playsinline=1&fs=0&iv_load_policy=3&disablekb=1' +
-                   '&enablejsapi=1';
-      var apiTag = document.createElement('script');
-      apiTag.src = 'https://www.youtube.com/iframe_api';
-      document.head.appendChild(apiTag);
+      var tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(tag);
       window.onYouTubeIframeAPIReady = function(){
-          try {
-              var player = new YT.Player(iframe, {
-                  events: {
-                      onReady: function(e){ try { e.target.playVideo(); } catch(_){} },
-                      onStateChange: function(e){
-                          if (e.data === -1 || e.data === 5) {
-                              try { e.target.playVideo(); } catch(_){}
-                          }
-                      }
+          if (!videoId) return;
+          new YT.Player('player', {
+              videoId: videoId,
+              playerVars: {
+                  autoplay: 1, start: startSeconds, mute: 1, controls: 0,
+                  modestbranding: 1, rel: 0, playsinline: 1, fs: 0,
+                  iv_load_policy: 3, disablekb: 1, enablejsapi: 1
+              },
+              events: {
+                  onReady: function(e){
+                      try {
+                          e.target.setVolume(100);
+                          e.target.seekTo(startSeconds);
+                          e.target.playVideo();
+                          setTimeout(function(){ try { e.target.unMute(); } catch(_){} }, 1000);
+                      } catch(_){}
                   }
-              });
-          } catch(_){}
+              }
+          });
       };
   })();
   </script>
